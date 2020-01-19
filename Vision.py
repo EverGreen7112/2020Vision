@@ -76,6 +76,7 @@ def set_kernel_value(val):
 
 
 cap = cv.VideoCapture(0)
+
 cv.namedWindow(window_capture_name, cv.WINDOW_NORMAL)
 cv.namedWindow(window_detection_name, cv.WINDOW_NORMAL)
 
@@ -88,7 +89,6 @@ cv.createTrackbar(low_V_name, window_detection_name, low_V, max_value, on_low_V_
 cv.createTrackbar(high_V_name, window_detection_name, high_V, max_value, on_high_V_thresh_trackbar)
 
 while True:
-
     res, frame = cap.read()
     if frame is None:
         break
@@ -96,12 +96,12 @@ while True:
     frame_threshold = cv.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
 
     kernel = np.ones((kernel_value, kernel_value), np.uint8)
-    # erosion = cv.erode(frame_threshold,kernel,iterations = 1)
-    # dilation = cv.dilate(erosion,kernel,iterations = 1)
+   
     opening = cv.morphologyEx(frame_threshold, cv.MORPH_OPEN, kernel)
+
     closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
 
-    contours, hierarchy = cv.findContours(closing, 1, 2)
+    contours, hierarchy = cv.findContours(closing, cv.RETR_EXTERNAL, 2)
 
     if len(contours) > 0:
         for cnt in contours:
@@ -113,6 +113,7 @@ while True:
 
     cv.imshow(window_capture_name, frame)
     cv.imshow(window_detection_name, frame_threshold)
+    
 
     key = cv.waitKey(30)
     if key == ord('q') or key == 27:
