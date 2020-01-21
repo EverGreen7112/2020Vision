@@ -3,15 +3,19 @@ import cv2 as cv
 import argparse
 import numpy as np
 
+KNOWN_WIDTH = 18
 max_value = 255
 max_value_H = 360 // 2
 low_H = 23
-low_S = 164
+low_S = 115
 low_V = 0
 high_H = 38
 high_S = 242
 high_V = 255
-kernel_value = 0
+kernel_value = 15
+kernel_value_name = "Kernel"
+focal_length = 801
+focal_length_name = "Focal length"
 window_capture_name = 'Video Capture'
 window_detection_name = 'Object Detection'
 low_H_name = 'Low H'
@@ -73,6 +77,14 @@ def on_high_V_thresh_trackbar(val):
 def set_kernel_value(val):
     global kernel_value
     kernel_value = val
+    cv.setTrackbarPos(kernel_value_name, window_detection_name, kernel_value)
+
+
+def set_focal_length(val):
+    global focal_length
+    focal_length = val
+    cv.setTrackbarPos(focal_length_name, window_detection_name, focal_length)
+
 
 
 cap = cv.VideoCapture(0)
@@ -80,7 +92,8 @@ cap = cv.VideoCapture(0)
 cv.namedWindow(window_capture_name, cv.WINDOW_NORMAL)
 cv.namedWindow(window_detection_name, cv.WINDOW_NORMAL)
 
-cv.createTrackbar("kernel", window_detection_name, 0, 50, set_kernel_value)
+cv.createTrackbar(focal_length_name, window_detection_name, focal_length, 1500, set_focal_length)
+cv.createTrackbar(kernel_value_name, window_detection_name, kernel_value, 50, set_kernel_value)
 cv.createTrackbar(low_H_name, window_detection_name, low_H, max_value_H, on_low_H_thresh_trackbar)
 cv.createTrackbar(high_H_name, window_detection_name, high_H, max_value_H, on_high_H_thresh_trackbar)
 cv.createTrackbar(low_S_name, window_detection_name, low_S, max_value, on_low_S_thresh_trackbar)
@@ -88,31 +101,49 @@ cv.createTrackbar(high_S_name, window_detection_name, high_S, max_value, on_high
 cv.createTrackbar(low_V_name, window_detection_name, low_V, max_value, on_low_V_thresh_trackbar)
 cv.createTrackbar(high_V_name, window_detection_name, high_V, max_value, on_high_V_thresh_trackbar)
 
+
+def get_width(cntr):
+    marker = cv.minAreaRect(cntr)
+    return marker[1][0]
+
+
+def clean_image(frame, kernel):
+    opening = cv.morphologyEx(frame, cv.MORPH_OPEN, kernel)
+    closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
+    return closing
+
+def distance_to_camera(knownWidth, focalLength, perWidth):
+	return (knownWidth * focalLength) / perWidth
+
 while True:
     res, frame = cap.read()
+
     if frame is None:
         break
     frame_HSV = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
+
     frame_threshold = cv.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
 
     kernel = np.ones((kernel_value, kernel_value), np.uint8)
    
-    opening = cv.morphologyEx(frame_threshold, cv.MORPH_OPEN, kernel)
-
-    closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
+    closing = clean_image(frame_threshold, kernel)
 
     contours, hierarchy = cv.findContours(closing, cv.RETR_EXTERNAL, 2)
 
     if len(contours) > 0:
         for cnt in contours:
             x, y, w, h = cv.boundingRect(cnt)
-            cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            contour_width = get_width(cnt)
+            if contour_width == 0:
+                break
+            distance = distance_to_camera(KNOWN_WIDTH, focal_length, contour_width)
+            cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 7)
             midX = int((x+x+w)/2)
             midY = int((y+y+h)/2)
-            cv.circle(frame, (midX, midY), 2, (255, 255, 255), -1)
+            cv.putText(frame, str(int(distance)), (midX, midY), cv.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 0), 3)
 
     cv.imshow(window_capture_name, frame)
-    cv.imshow(window_detection_name, frame_threshold)
+    cv.imshow(window_detection_name, closing)
     
 
     key = cv.waitKey(30)
