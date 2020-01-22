@@ -2,6 +2,7 @@ from __future__ import print_function
 import cv2 as cv
 import argparse
 import numpy as np
+import math
 
 KNOWN_WIDTH = 18
 max_value = 255
@@ -24,6 +25,10 @@ low_V_name = 'Low V'
 high_H_name = 'High H'
 high_S_name = 'High S'
 high_V_name = 'High V'
+image_mid_x = 640
+image_mid_y = 360
+camera_fov = 50
+image_total_pixels = 1280
 
 
 def on_low_H_thresh_trackbar(val):
@@ -106,7 +111,12 @@ def get_width(cntr):
     marker = cv.minAreaRect(cntr)
     return marker[1][0]
 
-
+def covert_center_touple_to_int(center):
+    center = list(center)
+    for i in range(2):
+        center[i] = int(center[i])
+    center = tuple(center)
+    return center
 def clean_image(frame, kernel):
     opening = cv.morphologyEx(frame, cv.MORPH_OPEN, kernel)
     closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
@@ -120,6 +130,9 @@ while True:
 
     if frame is None:
         break
+
+    #frame = cv.convertScaleAbs(frame, alpha=-1, beta=0)
+
     frame_HSV = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
     frame_threshold = cv.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
@@ -132,15 +145,18 @@ while True:
 
     if len(contours) > 0:
         for cnt in contours:
-            x, y, w, h = cv.boundingRect(cnt)
             contour_width = get_width(cnt)
             if contour_width == 0:
                 break
             distance = distance_to_camera(KNOWN_WIDTH, focal_length, contour_width)
-            cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 7)
-            midX = int((x+x+w)/2)
-            midY = int((y+y+h)/2)
-            cv.putText(frame, str(int(distance)), (midX, midY), cv.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 0), 3)
+            #x, y, w, h = cv.boundingRect(cnt)
+            #cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 7)
+            center, radius = cv.minEnclosingCircle(cnt)   
+            center = covert_center_touple_to_int(center)     
+            cv.circle(frame, center, int(radius) ,(0, 255, 0), 5)
+            distance_between_the_ball_and_the_center_of_the_image = image_mid_x - center[0]
+            angle = (distance_between_the_ball_and_the_center_of_the_image * camera_fov)/ image_total_pixels
+            cv.putText(frame, str(angle), (center), cv.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 0), 3)
 
     cv.imshow(window_capture_name, frame)
     cv.imshow(window_detection_name, closing)
