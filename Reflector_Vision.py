@@ -90,6 +90,27 @@ def set_focal_length(val):
     focal_length = val
     cv.setTrackbarPos(focal_length_name, window_detection_name, focal_length)
 
+def get_width(cntr):
+    marker = cv.minAreaRect(cntr)
+    return marker[1][0]
+
+
+def covert_center_touple_to_int(center):
+    center = list(center)
+    for i in range(2):
+        center[i] = int(center[i])
+    center = tuple(center)
+    return center
+
+
+def clean_image(frame, kernel):
+    opening = cv.morphologyEx(frame, cv.MORPH_OPEN, kernel)
+    closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
+    return closing
+
+
+def distance_to_camera(knownWidth, focalLength, perWidth):
+    return (knownWidth * focalLength) / perWidth
 
 
 cap = cv.VideoCapture(1)
@@ -107,38 +128,20 @@ cv.createTrackbar(low_V_name, window_detection_name, low_V, max_value, on_low_V_
 cv.createTrackbar(high_V_name, window_detection_name, high_V, max_value, on_high_V_thresh_trackbar)
 
 
-def get_width(cntr):
-    marker = cv.minAreaRect(cntr)
-    return marker[1][0]
-
-def covert_center_touple_to_int(center):
-    center = list(center)
-    for i in range(2):
-        center[i] = int(center[i])
-    center = tuple(center)
-    return center
-def clean_image(frame, kernel):
-    opening = cv.morphologyEx(frame, cv.MORPH_OPEN, kernel)
-    closing = cv.morphologyEx(opening, cv.MORPH_CLOSE, kernel)
-    return closing
-
-def distance_to_camera(knownWidth, focalLength, perWidth):
-	return (knownWidth * focalLength) / perWidth
-
 while True:
     res, frame = cap.read()
 
     if frame is None:
         break
 
-    #frame = cv.convertScaleAbs(frame, alpha=-1, beta=0)
+    frame = cv.convertScaleAbs(frame, alpha=1, beta=0)
 
     frame_HSV = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
     frame_threshold = cv.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
 
     kernel = np.ones((kernel_value, kernel_value), np.uint8)
-   
+
     closing = clean_image(frame_threshold, kernel)
 
     contours, hierarchy = cv.findContours(closing, cv.RETR_EXTERNAL, 2)
@@ -149,24 +152,19 @@ while True:
             if contour_width == 0:
                 break
             distance = distance_to_camera(KNOWN_WIDTH, focal_length, contour_width)
-            #x, y, w, h = cv.boundingRect(cnt)
-            #cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 7)
-            center, radius = cv.minEnclosingCircle(cnt)   
-            center = covert_center_touple_to_int(center)     
-            cv.circle(frame, center, int(radius) ,(0, 255, 0), 5)
+            # x, y, w, h = cv.boundingRect(cnt)
+            # cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 7)
+            center, radius = cv.minEnclosingCircle(cnt)
+            center = covert_center_touple_to_int(center)
+            cv.circle(frame, center, int(radius), (0, 255, 0), 5)
             distance_between_the_ball_and_the_center_of_the_image = image_mid_x - center[0]
-            angle = (distance_between_the_ball_and_the_center_of_the_image * camera_fov)/ image_total_pixels
-            cv.putText(frame, str(int(distance)) + ", " + str(int(angle)), (center), cv.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 0), 3)
+            angle = (distance_between_the_ball_and_the_center_of_the_image * camera_fov) / image_total_pixels
+            cv.putText(frame, str(int(distance)) + ", " + str(int(angle)), (center), cv.FONT_HERSHEY_SIMPLEX, 2.0,
+                       (0, 0, 0), 3)
 
     cv.imshow(window_capture_name, frame)
     cv.imshow(window_detection_name, closing)
-    
 
     key = cv.waitKey(30)
     if key == ord('q') or key == 27:
         break
-
-# (0.5 * y * cos(alpha / 2)) / sin(alpha / 2)
-# y = diameter of the ball
-# alpha = angle of len
-# only when the ball is 100% of the frame
