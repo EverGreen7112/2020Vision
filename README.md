@@ -1,1 +1,1 @@
-# 2020Vision
+# Tomer's version to powercell detection
