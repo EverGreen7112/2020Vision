@@ -3,13 +3,14 @@ import cv2 as cv
 import argparse
 import numpy as np
 import math
+import imutils
 
 KNOWN_WIDTH = 18
 max_value = 255
 max_value_H = 360 // 2
-low_H = 23
+low_H = 20
 low_S = 115
-low_V = 0
+low_V = 80
 high_H = 38
 high_S = 242
 high_V = 255
@@ -29,7 +30,6 @@ image_mid_x = 640
 image_mid_y = 360
 camera_fov = 50
 image_total_pixels = 1280
-
 
 def on_low_H_thresh_trackbar(val):
     global low_H
@@ -90,12 +90,11 @@ def set_focal_length(val):
     focal_length = val
     cv.setTrackbarPos(focal_length_name, window_detection_name, focal_length)
 
-
-
 cap = cv.VideoCapture(0)
 
 cv.namedWindow(window_capture_name, cv.WINDOW_NORMAL)
 cv.namedWindow(window_detection_name, cv.WINDOW_NORMAL)
+
 
 cv.createTrackbar(focal_length_name, window_detection_name, focal_length, 1500, set_focal_length)
 cv.createTrackbar(kernel_value_name, window_detection_name, kernel_value, 50, set_kernel_value)
@@ -128,13 +127,13 @@ def distance_to_camera(knownWidth, focalLength, perWidth):
 while True:
     res, frame = cap.read()
 
+    #frame = cv.imread("powercell.jpg")
+
     if frame is None:
         break
 
-    #frame = cv.convertScaleAbs(frame, alpha=-1, beta=0)
-
     frame_HSV = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-
+  
     frame_threshold = cv.inRange(frame_HSV, (low_H, low_S, low_V), (high_H, high_S, high_V))
 
     kernel = np.ones((kernel_value, kernel_value), np.uint8)
@@ -145,17 +144,31 @@ while True:
 
     if len(contours) > 0:
         for cnt in contours:
+
             contour_width = get_width(cnt)
             if contour_width == 0:
                 break
+
+            #peri = cv.arcLength(cnt, True)
+            #approx = cv.approxPolyDP(cnt, 0.01 * peri, True)
+            #cv.drawContours(frame, [approx], -1, (0, 0, 0), 5)
+
             distance = distance_to_camera(KNOWN_WIDTH, focal_length, contour_width)
-            #x, y, w, h = cv.boundingRect(cnt)
-            #cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 7)
+
+            x, y, w, h = cv.boundingRect(cnt)
+
+            cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 7)
+
             center, radius = cv.minEnclosingCircle(cnt)   
+
             center = covert_center_touple_to_int(center)     
+
             cv.circle(frame, center, int(radius) ,(0, 255, 0), 5)
+
             distance_between_the_ball_and_the_center_of_the_image = image_mid_x - center[0]
+
             angle = (distance_between_the_ball_and_the_center_of_the_image * camera_fov)/ image_total_pixels
+
             cv.putText(frame, str(angle), (center), cv.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 0), 3)
 
     cv.imshow(window_capture_name, frame)
