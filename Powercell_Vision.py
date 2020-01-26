@@ -94,7 +94,6 @@ def set_kernel_value(val):
     kernel_value = val
     cv.setTrackbarPos(kernel_value_name, window_detection_name, kernel_value)
 
-
 def set_focal_length(val):
     global focal_length
     focal_length = val
@@ -170,7 +169,7 @@ while True:
 
         angle = (distance_between_the_ball_and_the_center_of_the_image * camera_fov)/ image_total_pixels
 
-        cv.putText(frame, str(angle), (center), cv.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 0), 3)
+        cv.putText(frame, str(distance), (center), cv.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 0), 3)
 
     cv.imshow(window_capture_name, frame)
     cv.imshow(window_detection_name, closing)

@@ -1,1 +1,0 @@
-# Tomer's version to powercell detection
