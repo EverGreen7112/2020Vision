@@ -1,6 +1,11 @@
 import math
 
 def find_distance_from_objecet(focal_length, area, known_area):
+    """
+    :param focal_lenght: Focal lenght of the camera - need calibration
+    :param area: The area of the object (pixels^2)
+    :param known_area: The known area of the object (m^2)
+    """
     return focal_length * math.sqrt(known_area / area)
 
 def find_angle(distance_from_center, camera_fov, image_total_pixels):
