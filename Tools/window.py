@@ -3,6 +3,9 @@ import numpy as np
 from USBCamera import USBCamera
 
 class Window():
+    """
+    Simple window class who inherits to the other windows classes
+    """
     def __init__(self, window_name: str):
         self.window_name = window_name
 
@@ -19,13 +22,22 @@ class Window():
         return cv.getTrackbarPos(trackbar_name, self.window_name)
 
 class CameraWindow(Window):
+    """
+    A window for displaying information from a given camera
+    """
     def __init__(self, window_name: str, camera: USBCamera, exit_button='qQ'):
+        """
+        Initializes the window
+        :param window_name: The window's name
+        :param exit_button: The exit button
+        :param: camera: camera to read image from
+        """
         self.window_name = window_name
         self.exit_button = exit_button
         self.camera = camera
         self.last_key_pressed = None
 
-    def show_frame(self, frame):
+    def show_frame(self, frame) -> bool:
         if frame is None:
             return False
 
@@ -47,15 +59,24 @@ class CameraWindow(Window):
         return frame
 
 class FeedWindow(Window):
+    """
+    Basic feed window
+    """
     def __init__(self, window_name: str, exit_button='qQ'):
+        """
+        Initializes the window
+        :param window_name: The window's name
+        :param exit_button: The exit button
+        """
+        self.window_name = window_name
         self.exit_button = exit_button
         self.last_key_pressed = None
 
-    def show_frame(self, frame):
+    def show_frame(self, frame) -> bool:
         if frame is None:
             return False
-        cv2.imshow(self.window_name, frame)
-        k = chr(cv2.waitKey(1) & 0xFF)
+        cv.imshow(self.window_name, frame)
+        k = chr(cv.waitKey(1) & 0xFF)
         self.last_key_pressed = k
         if k in self.exit_button:
             return False
