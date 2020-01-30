@@ -42,19 +42,38 @@ class CameraWindow(Window):
             return False
 
         cv.imshow(self.window_name, frame)
-        k = chr(cv.waitKey(1) & 0xFF)
+        k = chr(cv.waitKey(10) & 0xFF)
         self.last_key_pressed = k
         if k in self.exit_button:
             return False
         return True
 
     def show_and_get_frame(self):
+        """
+        Shows the frame in the window and returns the frame if the frame is shown,
+        else it returns None
+        """
         frame = self.get_frame()
         if self.show_frame(frame):
             return frame
         return None
           
+    def show_and_get_color_frame(self, code):
+        """
+        Shows the frame in the window and returns the coded and the real frames if the frame is shown,
+        else it returns None
+        :param code: The code for the cvtColor() function. For examle: cv.COLOR_BGR2HSV
+        """
+        frame = self.get_frame()
+        if self.show_frame(frame):
+            coded_frame = cv.cvtColor(frame, code)
+            return coded_frame, frame
+        return None, None
+
     def get_frame(self):
+        """
+        Returns the camera's output
+        """
         ret, frame = self.camera.read()
         return frame
 
@@ -76,7 +95,7 @@ class FeedWindow(Window):
         if frame is None:
             return False
         cv.imshow(self.window_name, frame)
-        k = chr(cv.waitKey(1) & 0xFF)
+        k = chr(cv.waitKey(10) & 0xFF)
         self.last_key_pressed = k
         if k in self.exit_button:
             return False

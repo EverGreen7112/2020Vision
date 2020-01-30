@@ -15,6 +15,6 @@ def find_angle(distance_from_center :float, camera_fov: float, image_total_pixel
     Calculates the angle between the camera and the center of the object
     :param distance_from_center: The distance between the center of the object to the center of the picture (in pixels)
     :param camera_fov: The camera's fov
-    :param image_total_pixels: image totalpixels
+    :param image_total_pixels: image total pixels
     """
     return (distance_from_center * camera_fov) / image_total_pixels

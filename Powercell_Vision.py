@@ -163,7 +163,7 @@ while True:
 
         center = covert_center_touple_to_int(center)     
 
-        cv.circle(frame, center, int(radius) ,(0, 255, 0), 5)
+        cv.circle(frame, center, int(raqqdius) ,(0, 255, 0), 5)
 
         distance_between_the_ball_and_the_center_of_the_image = image_mid_x - center[0]
 
