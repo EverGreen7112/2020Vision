@@ -1,5 +1,5 @@
 import cv2 as cv
-import find_tools
+import numpy as np
 from copy import deepcopy
 
 def find_contours(frame, mode=0, method=2) -> list:
@@ -22,7 +22,7 @@ def draw_circle(frame, center: tuple, radius: float, color=(0, 255, 0), thick=5)
 
 def get_circle_value(contour):
     """
-    Returns the cicle radius and center coordinate
+    Returns the cicle center coordinate and radius
     :param contour: The contour
     """
     center, radius = cv.minEnclosingCircle(contour)   
@@ -73,4 +73,35 @@ def draw_rectangle_and_return_values(frame_to_draw_on, contour):
     frame_to_draw_on = draw_rectangle(frame_to_draw_on, point1, point2)
     return frame_to_draw_on, point1, point2
 
+def get_rotated_rect_value(contour):
+    """
+    Returns the 4 bounding rectangle points
+    :param contour: The contour
+    """
+    box = cv.minAreaRect(contour)
+    points = cv.boxPoints(box)
+    points = np.int0(points)
+    return points
+
+
+def draw_rotated_rect(frame, points, color=(0, 255, 0), thick=5):
+    """
+    Draws a bounding rectangle
+    :param frame: Frame
+    :param points: Points on the rectangle
+    """
+    frame = deepcopy(frame)
+    cv.drawContours(frame, [points], 0, color, thick)
+    return frame
+
+def draw_rotated_rect_and_return_values(frame_to_draw_on, contour):
+    """
+    Draws a rotated bounding rectangle and
+    Returns the 4 bounding rectangle points
+    :param frame_to_draw_on: The frame that I want to draw the circle on
+    :param contour: The contour
+    """
+    points = get_rotated_rect_value(contour)
+    frame_to_draw_on = draw_rotated_rect(frame_to_draw_on, points)
+    return frame_to_draw_on, points
 

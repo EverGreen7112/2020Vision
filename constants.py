@@ -14,10 +14,21 @@ class HSV_ranges:
         highH = 38
         highS = 242
         highV = 255
-    
+
         low = (lowH, lowS, lowV)
         high = (highH, highS, highV)
 
+
+class Powercell:
+    """
+    Information about the powercell
+    """
+    area = 0.099 #In meters
+
+class Reflector:
+     """
+    Information about the life reflectors
+    """
 
 class Cameras:
     """
@@ -29,6 +40,6 @@ class Cameras:
         Information about our back camera who tracks the reflective tapes
         """
         focal_length = 697.0395744431028
-        fov = 24.227745318014267895
-        mid_x = 640
-        mid_y = 360
+        fov = 53
+        middle = (640, 360)
+        image_total_pixels = middle[0] * 2
